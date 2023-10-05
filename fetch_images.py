@@ -11,7 +11,7 @@ def fetch_photo(query):
 
     url = 'https://api.pexels.com/v1/search'
     headers = {
-        'Authorization':api_key,
+        'Authorization':PEXELS_API_KEY,
     }
     params = {
         'query':query,
