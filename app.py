@@ -42,7 +42,7 @@ def create_docx(user_input,paragraph,image_input):
 st.set_page_config(layout="wide")
 
 def main():
-    st.title("Aplicación Generadora de Artículoscon AI")
+    st.title("Aplicación Generadora de textos con AI")
 
     user_input = st.text_input("¡Por favor, introduce la idea/tema para el artículo que deseas generar!")
 
@@ -76,7 +76,6 @@ def main():
 
         with col3:
             st.subheader("Descarga el articulo")
-            image_input = "temp_image.jpg"
             image_response = requests.get(image_url)
             img = Image.open(io.BytesIO(image_response.content))
             doc = create_docx(user_input, result['text'],img)
