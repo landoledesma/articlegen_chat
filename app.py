@@ -15,6 +15,9 @@ from PIL import Image
 import requests
 from fetch_images import fetch_photo
 
+load_dotenv("token.env")
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
 def load_llm(template):
     llm  = ChatOpenAI(
         max_tokens=2000,
@@ -27,12 +30,7 @@ def load_llm(template):
     )
     return llm_chain
 
-query = 'kitties'
-src_original_url = fetch_photo(query)
-if src_original_url:
-    print(f"Original URL for query '{query}': {src_original_url}")
-else:
-    print("No se pudo traer imagens lo siento")
+
 
 def create_docx(user_input,paragraph,image_input):
     doc = Document()
@@ -52,41 +50,41 @@ st.set_page_config(layout="wide")
 def main():
     st.title("Aplicación Generadora de Artículoscon AI")
 
-    entrada_usuario = st.text_input("¡Por favor, introduce la idea/tema para el artículo que deseas generar!")
+    user_input = st.text_input("¡Por favor, introduce la idea/tema para el artículo que deseas generar!")
 
-    entrada_imagen = st.text_input("¡Por favor, introduce el tema de la imagen que deseas obtener!")
+    image_input = st.text_input("¡Por favor, introduce el tema de la imagen que deseas obtener!")
 
-    if len(entrada_usuario) > 0 and len(entrada_imagen) > 0:
+    if len(user_input) > 0 and len(image_input) > 0:
 
         col1, col2, col3 = st.columns([1,2,1])
 
         with col1:
             st.subheader("Contenido Generado con inteligencia artifical")
-            st.write("El tema del artículo es: " + entrada_usuario)
-            st.write("La imagen del artículo es: " + entrada_imagen)
+            st.write("El tema del artículo es: " + user_input)
+            st.write("La imagen del artículo es: " + image_input)
             plantilla_prompt = """Eres un experto en marketing digital y SEO y tu tarea es escribir un artículo
-              sobre el tema proporcionado: {entrada_usuario}. El artículo no debe superar las 800 palabras.
+              sobre el tema proporcionado: {user_input}. El artículo no debe superar las 800 palabras.
               El artículo no debe ser muy largo.
             """
-            llamada_llm = cargar_llm(max_tokens=800, plantilla_prompt=plantilla_prompt)
+            llamada_llm = load_llm(max_tokens=800, plantilla_prompt=plantilla_prompt)
             print(llamada_llm)
-            resultado = llamada_llm(entrada_usuario)
-            if len(resultado) > 0:
+            result = llamada_llm(user_input)
+            if len(result) > 0:
                 st.info("¡Tu artículo ha sido generado con éxito!")
-                st.write(resultado)
+                st.write(result)
             else:
                 st.error("¡No se pudo generar tu artículo!")
 
         with col2:
             st.subheader("Imagen Obtenida")
-            url_imagen = obtener_url_original(entrada_imagen)
+            url_imagen = fetch_photo(image_input)
             st.image(url_imagen)
 
 
         with col3:
             st.subheader("Articulo final")
             image_input = "temp_image.jpg"
-            doc = create_word_docx(user_input, result['text'], Image.open(image_input))
+            doc = create_docx(user_input, result['text'], Image.open(image_input))
 
             # Save the Word document to a BytesIO buffer
             doc_buffer = io.BytesIO()
