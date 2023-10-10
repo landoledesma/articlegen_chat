@@ -1,19 +1,15 @@
 from langchain.prompts import PromptTemplate
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import FAISS
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
 import os
-import openai
 from dotenv import load_dotenv
 import streamlit as st 
-import os
 from docx import Document
 from docx.shared import Inches
 import io
 from PIL import Image
-import requests
 from fetch_images import fetch_photo
+import requests
 
 load_dotenv("token.env")
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
@@ -30,8 +26,6 @@ def load_llm(template):
     )
     return llm_chain
 
-
-
 def create_docx(user_input,paragraph,image_input):
     doc = Document()
     doc.add_heading(user_input)
@@ -40,7 +34,7 @@ def create_docx(user_input,paragraph,image_input):
     doc.add_heading('Image',level=1)
     image_stream = io.BytesIO()
     image_input.save(image_stream,format='PNG')
-    image_input.seek(0)
+    image_stream.seek(0)
     doc.add_picture(image_stream,width=Inches(4))
 
     return doc
@@ -62,11 +56,11 @@ def main():
             st.subheader("Contenido Generado con inteligencia artifical")
             st.write("El tema del artículo es: " + user_input)
             st.write("La imagen del artículo es: " + image_input)
-            plantilla_prompt = """Eres un experto en marketing digital y SEO y tu tarea es escribir un artículo
+            prompt = """Eres un experto en marketing digital y SEO y tu tarea es escribir un artículo
               sobre el tema proporcionado: {user_input}. El artículo no debe superar las 800 palabras.
               El artículo no debe ser muy largo.
             """
-            llamada_llm = load_llm(max_tokens=800, plantilla_prompt=plantilla_prompt)
+            llamada_llm = load_llm(template=prompt)
             print(llamada_llm)
             result = llamada_llm(user_input)
             if len(result) > 0:
@@ -77,14 +71,15 @@ def main():
 
         with col2:
             st.subheader("Imagen Obtenida")
-            url_imagen = fetch_photo(image_input)
-            st.image(url_imagen)
-
+            image_url = fetch_photo(image_input)
+            st.image(image_url)
 
         with col3:
-            st.subheader("Articulo final")
+            st.subheader("Descarga el articulo")
             image_input = "temp_image.jpg"
-            doc = create_docx(user_input, result['text'], Image.open(image_input))
+            image_response = requests.get(image_url)
+            img = Image.open(io.BytesIO(image_response.content))
+            doc = create_docx(user_input, result['text'],img)
 
             # Save the Word document to a BytesIO buffer
             doc_buffer = io.BytesIO()
